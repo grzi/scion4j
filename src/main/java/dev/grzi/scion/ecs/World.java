@@ -9,7 +9,10 @@ import java.util.stream.Collectors;
 public class World {
 
     private final String name;
+
     private final Map<Class<?>, Storage<?>> storages = new HashMap<>();
+    // List of all 'resources' available
+    private final Map<Class<?>, Object> resources = new HashMap<>();
     // List of entities ids and their components that are marked to be add at the end of the current generation
     private final Map<EntityId, Object[]> nextGeneration = new HashMap<>();
     // List of entities ids that are alive during the current generation
@@ -45,6 +48,25 @@ public class World {
         return query.compute(this).stream()
                 .map(entityId -> new Entity(entityId, this))
                 .collect(Collectors.toSet());
+    }
+
+    public <T> void addResource(T resource){
+        if (resource == null)
+            throw new ScionIllegalArgumentException("Resource can't be null");
+
+        this.resources.put(resource.getClass(), resource);
+    }
+
+    public <T> void removeResource(Class<T> tClass){
+        if (tClass == null)
+            throw new ScionIllegalArgumentException("Resource type can't be null");
+
+        this.resources.remove(tClass);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> Optional<T> getResource(Class<T> tClass){
+        return Optional.ofNullable(this.resources.get(tClass)).map(res -> (T) res);
     }
 
     void endGeneration(){

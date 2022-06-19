@@ -42,4 +42,15 @@ class WorldTest {
         var nextEntity = world.push("Another entity that should reuse index");
         assertThat(nextEntity.index()).isEqualTo(entityId1.index());
     }
+
+    @Test
+    void testResources() {
+        var world = new World();
+        world.addResource(89);
+
+        assertThat(world.getResource(Integer.class)).isPresent();
+
+        world.removeResource(Integer.class);
+        assertThat(world.getResource(Integer.class)).isEmpty();
+    }
 }

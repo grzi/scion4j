@@ -2,10 +2,8 @@ package dev.grzi.scion.ecs;
 
 import dev.grzi.scion.exception.ScionIllegalArgumentException;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class Query {
     public static Query ALL = new Query();
@@ -47,13 +45,14 @@ public class Query {
 
 
     public Set<EntityId> compute(World world) {
-        var result = new HashSet<>(world.getAliveEntities());
+        var bitset = new BitSet((int)Math.pow(2,14));
+        world.getAliveEntities().forEach(e -> bitset.set(e.index()));
         for (Class<?> type: this.joins) {
             var optStorage = world.getStorage(type);
             if (optStorage.isEmpty())
                 return new HashSet<>();
             var storage = optStorage.get();
-            result.removeIf(entityId -> !storage.hasComponentForEntityId(entityId));
+            bitset.and(storage.getFlags());
         }
 
         for (Class<?> type: this.exclusions){
@@ -61,9 +60,10 @@ public class Query {
             if (optStorage.isEmpty())
                 continue;
             var storage = optStorage.get();
-            result.removeIf(storage::hasComponentForEntityId);
+            bitset.andNot(storage.getFlags());
         }
 
-        return result;
+        return bitset.stream().mapToObj(EntityId::new)
+                .collect(Collectors.toSet());
     }
 }
